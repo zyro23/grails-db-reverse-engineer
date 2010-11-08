@@ -1,0 +1,266 @@
+<html>
+    <head>
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+        <title>4 Tutorial</title>
+        <link rel="stylesheet" href="../css/main.css" type="text/css" media="screen" title="Ref" charset="utf-8"/>
+    </head>
+    <body class="body">
+    <h1><a name="4 Tutorial">4 Tutorial</a></h1>In this tutorial we'll create a MySQL database and generate domain classes from it.<p class="paragraph"/><h4>1. Create your Grails application.</h4><p class="paragraph"/><div class="code"><pre>$ grails create&#45;app reveng&#45;test
+$ cd reveng&#45;test</pre></div><p class="paragraph"/><h4>2. Install the plugin.</h4>
+<div class="code"><pre>$ grails install&#45;plugin reverse&#45;engineer</pre></div><p class="paragraph"/><h4>3. Configure the development environment for MySQL.</h4><p class="paragraph"/>Set these property values in the <code>development</code> section of <code>grails-app/conf/DataSource.groovy</code><p class="paragraph"/><div class="code"><pre>dataSource &#123;
+   url = 'jdbc:mysql://localhost/reveng'
+   driverClassName = 'com.mysql.jdbc.Driver'
+   username = 'reveng'
+   password = 'reveng'
+   dialect = org.hibernate.dialect.MySQL5InnoDBDialect
+&#125;</pre></div><p class="paragraph"/>Also add a dependency for the MySQL JDBC driver in <code>grails-app/conf/BuildConfig.groovy</code>:<p class="paragraph"/><div class="code"><pre>dependencies &#123;
+   runtime 'mysql:mysql&#45;connector&#45;java:5.1.5'
+&#125;</pre></div><p class="paragraph"/>and be sure to uncomment the <code>mavenCentral()</code> repo:<p class="paragraph"/><div class="code"><pre>repositories &#123;
+   grailsPlugins()
+   grailsHome()
+   grailsCentral()<p class="paragraph"/>   mavenCentral()
+&#125;</pre></div><p class="paragraph"/><h4>4. Create the database.</h4><p class="paragraph"/>As the root user or another user that has rights to create a database and configure grants, run<p class="paragraph"/><div class="code"><pre>create database reveng;
+grant all on reveng.&#42; to reveng&#64;localhost identified by 'reveng';</pre></div><p class="paragraph"/><h4>5. Create the database tables.</h4><p class="paragraph"/>Run these create and alter statements in the <code>reveng</code> database:<p class="paragraph"/><div class="code"><pre>use reveng;<p class="paragraph"/>create table author (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   name varchar(255) not <span class="java&#45;keyword">null</span>,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table author_books (
+   author_id bigint not <span class="java&#45;keyword">null</span>,
+   book_id bigint not <span class="java&#45;keyword">null</span>,
+   primary key (author_id, book_id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table book (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   title varchar(255) not <span class="java&#45;keyword">null</span>,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table compos (
+   first_name varchar(255) not <span class="java&#45;keyword">null</span>,
+   last_name varchar(255) not <span class="java&#45;keyword">null</span>,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   other varchar(255) not <span class="java&#45;keyword">null</span>,
+   primary key (first_name, last_name)
+) ENGINE=InnoDB;<p class="paragraph"/>create table compound_unique (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   prop1 varchar(255) not <span class="java&#45;keyword">null</span>,
+   prop2 varchar(255) not <span class="java&#45;keyword">null</span>,
+   prop3 varchar(255) not <span class="java&#45;keyword">null</span>,
+   prop4 varchar(255) not <span class="java&#45;keyword">null</span>,
+   prop5 varchar(255) not <span class="java&#45;keyword">null</span>,
+   primary key (id),
+   unique (prop4, prop3, prop2)
+) ENGINE=InnoDB;<p class="paragraph"/>create table library (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   name varchar(255) not <span class="java&#45;keyword">null</span>,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table other (
+   username varchar(255) not <span class="java&#45;keyword">null</span>,
+   nonstandard_version_name bigint not <span class="java&#45;keyword">null</span>,
+   primary key (username)
+) ENGINE=InnoDB;<p class="paragraph"/>create table role (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   authority varchar(255) not <span class="java&#45;keyword">null</span> unique,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table thing (
+   thing_id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   email varchar(255) not <span class="java&#45;keyword">null</span> unique,
+   float_value <span class="java&#45;object">float</span> not <span class="java&#45;keyword">null</span>,
+   name varchar(123),
+   primary key (thing_id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table user (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   account_expired bit not <span class="java&#45;keyword">null</span>,
+   account_locked bit not <span class="java&#45;keyword">null</span>,
+   enabled bit not <span class="java&#45;keyword">null</span>,
+   password varchar(255) not <span class="java&#45;keyword">null</span>,
+   password_expired bit not <span class="java&#45;keyword">null</span>,
+   username varchar(255) not <span class="java&#45;keyword">null</span> unique,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table user_role (
+   role_id bigint not <span class="java&#45;keyword">null</span>,
+   user_id bigint not <span class="java&#45;keyword">null</span>,
+   date_updated datetime not <span class="java&#45;keyword">null</span>,
+   primary key (role_id, user_id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table visit (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   library_id bigint not <span class="java&#45;keyword">null</span>,
+   person varchar(255) not <span class="java&#45;keyword">null</span>,
+   visit_date datetime not <span class="java&#45;keyword">null</span>,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>alter table author_books add index FK24C812F63FA913A (book_id),
+add constraint FK24C812F63FA913A foreign key (book_id) references book (id);<p class="paragraph"/>alter table author_books add index FK24C812F6CD85EDFA (author_id),
+add constraint FK24C812F6CD85EDFA foreign key (author_id) references author (id);<p class="paragraph"/>alter table user_role add index FK143BF46A52388A1A (role_id),
+add constraint FK143BF46A52388A1A foreign key (role_id) references role (id);<p class="paragraph"/>alter table user_role add index FK143BF46AF7634DFA (user_id),
+add constraint FK143BF46AF7634DFA foreign key (user_id) references user (id);<p class="paragraph"/>alter table visit add index FK6B04D4B4AEC8BBA (library_id),
+add constraint FK6B04D4B4AEC8BBA foreign key (library_id) references library (id);</pre></div><p class="paragraph"/><h4>6. Configure the reverse engineering process.</h4><p class="paragraph"/>Add these configuration options to <code>grails-app/conf/Config.groovy</code>:<p class="paragraph"/><div class="code"><pre>grails.plugin.reveng.packageName = 'com.revengtest'
+grails.plugin.reveng.versionColumns = &#91;other: 'nonstandard_version_name'&#93;
+grails.plugin.reveng.manyToManyTables = &#91;'user_role'&#93;
+grails.plugin.reveng.manyToManyBelongsTos = &#91;'user_role': 'role', 'author_books': 'book'&#93;</pre></div><p class="paragraph"/><h4>7. Run the reverse-engineer script.</h4><p class="paragraph"/><div class="code"><pre>grails reverse&#45;engineer</pre></div><p class="paragraph"/><h4>8. Look at the generated domain classes.</h4><p class="paragraph"/><h4>Author and Book domain classes.</h4><p class="paragraph"/>The <code>author</code> and <code>book</code> tables have a many-to-many relationship, which uses the <code>author_books</code> join table:<p class="paragraph"/><div class="code"><pre>create table author (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   name varchar(255) not <span class="java&#45;keyword">null</span>,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table author_books (
+   author_id bigint not <span class="java&#45;keyword">null</span>,
+   book_id bigint not <span class="java&#45;keyword">null</span>,
+   primary key (author_id, book_id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table book (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   title varchar(255) not <span class="java&#45;keyword">null</span>,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>alter table author_books add index FK24C812F63FA913A (book_id),
+add constraint FK24C812F63FA913A foreign key (book_id) references book (id);<p class="paragraph"/>alter table author_books add index FK24C812F6CD85EDFA (author_id),
+add constraint FK24C812F6CD85EDFA foreign key (author_id) references author (id);</pre></div><p class="paragraph"/>After running the script you'll have classes similar to these (I've removed empty <code>mapping</code> and <code>constraints</code> blocks):<p class="paragraph"/><div class="code"><pre>class Author &#123;
+   <span class="java&#45;object">String</span> name
+   <span class="java&#45;keyword">static</span> hasMany = &#91;books: Book&#93;
+&#125;</pre></div><p class="paragraph"/>and<p class="paragraph"/><div class="code"><pre>class Book &#123;
+   <span class="java&#45;object">String</span> title
+   <span class="java&#45;keyword">static</span> hasMany = &#91;authors: Author&#93;
+   <span class="java&#45;keyword">static</span> belongsTo = Author
+&#125;</pre></div><p class="paragraph"/><code>Book</code> has the line <code>static belongsTo = Author</code> because we specified this in <code>Config.groovy</code> with the <code>grails.plugin.reveng.manyToManyBelongsTos</code> property.<p class="paragraph"/><h4>Compos domain class.</h4><p class="paragraph"/>The <code>compos</code> table has a composite primary key (made up of the <code>first_name</code> and <code>last_name</code> columns):<p class="paragraph"/><div class="code"><pre>create table compos (
+   first_name varchar(255) not <span class="java&#45;keyword">null</span>,
+   last_name varchar(255) not <span class="java&#45;keyword">null</span>,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   other varchar(255) not <span class="java&#45;keyword">null</span>,
+   primary key (first_name, last_name)
+) ENGINE=InnoDB;</pre></div><p class="paragraph"/>and it generates this domain class:<p class="paragraph"/><div class="code"><pre><span class="java&#45;keyword">import</span> org.apache.commons.lang.builder.EqualsBuilder
+<span class="java&#45;keyword">import</span> org.apache.commons.lang.builder.HashCodeBuilder<p class="paragraph"/>class Compos <span class="java&#45;keyword">implements</span> Serializable &#123;<p class="paragraph"/>   <span class="java&#45;object">String</span> firstName
+   <span class="java&#45;object">String</span> lastName
+   <span class="java&#45;object">String</span> other<p class="paragraph"/>   <span class="java&#45;object">int</span> hashCode() &#123;
+      def builder = <span class="java&#45;keyword">new</span> HashCodeBuilder()
+      builder.append firstName
+      builder.append lastName
+      builder.toHashCode()
+   &#125;<p class="paragraph"/>   <span class="java&#45;object">boolean</span> equals(other) &#123;
+      <span class="java&#45;keyword">if</span> (other == <span class="java&#45;keyword">null</span>) <span class="java&#45;keyword">return</span> <span class="java&#45;keyword">false</span>
+      def builder = <span class="java&#45;keyword">new</span> EqualsBuilder()
+      builder.append firstName, other.firstName
+      builder.append lastName, other.lastName
+      builder.isEquals()
+   &#125;<p class="paragraph"/>   <span class="java&#45;keyword">static</span> mapping = &#123;
+      id composite: &#91;<span class="java&#45;quote">"firstName"</span>, <span class="java&#45;quote">"lastName"</span>&#93;
+   &#125;
+&#125;</pre></div><p class="paragraph"/>Since it has a composite primary key, the class is its own primary key so it has to implement <code>Serializable</code> and implement <code>hashCode</code> and <code>equals</code>.<p class="paragraph"/><h4>CompoundUnique domain class.</h4><p class="paragraph"/>The <code>compound_unique</code> table has five properties, three of which are in a compound unique index:<p class="paragraph"/><div class="code"><pre>create table compound_unique (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   prop1 varchar(255) not <span class="java&#45;keyword">null</span>,
+   prop2 varchar(255) not <span class="java&#45;keyword">null</span>,
+   prop3 varchar(255) not <span class="java&#45;keyword">null</span>,
+   prop4 varchar(255) not <span class="java&#45;keyword">null</span>,
+   prop5 varchar(255) not <span class="java&#45;keyword">null</span>,
+   primary key (id),
+   unique (prop4, prop3, prop2)
+) ENGINE=InnoDB;</pre></div><p class="paragraph"/>and it generates this domain class:<p class="paragraph"/><div class="code"><pre>class CompoundUnique &#123;<p class="paragraph"/>   <span class="java&#45;object">String</span> prop1
+   <span class="java&#45;object">String</span> prop2
+   <span class="java&#45;object">String</span> prop3
+   <span class="java&#45;object">String</span> prop4
+   <span class="java&#45;object">String</span> prop5<p class="paragraph"/>   <span class="java&#45;keyword">static</span> constraints = &#123;
+      prop2 unique: &#91;<span class="java&#45;quote">"prop3"</span>, <span class="java&#45;quote">"prop4"</span>&#93;
+   &#125;
+&#125;</pre></div><p class="paragraph"/><h4>Library and Visit domain classes.</h4><p class="paragraph"/>The <code>library</code> and <code>visit</code> tables have a one-to-many relationship:<p class="paragraph"/><div class="code"><pre>create table library (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   name varchar(255) not <span class="java&#45;keyword">null</span>,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table visit (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   library_id bigint not <span class="java&#45;keyword">null</span>,
+   person varchar(255) not <span class="java&#45;keyword">null</span>,
+   visit_date datetime not <span class="java&#45;keyword">null</span>,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>alter table visit add index FK6B04D4B4AEC8BBA (library_id),
+add constraint FK6B04D4B4AEC8BBA foreign key (library_id) references library (id);</pre></div><p class="paragraph"/>and they generate these domain classes:<p class="paragraph"/><div class="code"><pre>class Library &#123;
+   <span class="java&#45;object">String</span> name
+   <span class="java&#45;keyword">static</span> hasMany = &#91;visits: Visit&#93;
+&#125;</pre></div><p class="paragraph"/><div class="code"><pre>class Visit &#123;<p class="paragraph"/>   <span class="java&#45;object">String</span> person
+   Date visitDate<p class="paragraph"/>   <span class="java&#45;keyword">static</span> belongsTo = &#91;library: Library&#93;<p class="paragraph"/>   <span class="java&#45;keyword">static</span> mapping = &#123;
+      version <span class="java&#45;keyword">false</span>
+   &#125;
+&#125;</pre></div><p class="paragraph"/><code>visit</code> has no <code>version</code> column, so the <code>Visit</code> has optimistic lock checking disabled (<code>version false</code>).<p class="paragraph"/><h4>Other domain class.</h4><p class="paragraph"/>The <code>other</code> table has a string primary key, and an optimistic locking column that's not named <code>version</code>. Since we configured this with the <code>grails.plugin.reveng.versionColumns</code> property, the column is resolved correctly:<p class="paragraph"/><div class="code"><pre>create table other (
+   username varchar(255) not <span class="java&#45;keyword">null</span>,
+   nonstandard_version_name bigint not <span class="java&#45;keyword">null</span>,
+   primary key (username)
+) ENGINE=InnoDB;</pre></div><p class="paragraph"/><div class="code"><pre>class Other &#123;<p class="paragraph"/>   <span class="java&#45;object">String</span> username<p class="paragraph"/>   <span class="java&#45;keyword">static</span> mapping = &#123;
+      id name: <span class="java&#45;quote">"username"</span>, generator: <span class="java&#45;quote">"assigned"</span>
+      version <span class="java&#45;quote">"nonstandard_version_name"</span>
+   &#125;
+&#125;</pre></div><p class="paragraph"/><h4>User and Role domain classes.</h4><p class="paragraph"/>The <code>user</code> and <code>role</code> tables have a many-to-many relationship, which uses the <code>user_role</code> join table:<p class="paragraph"/><div class="code"><pre>create table role (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   authority varchar(255) not <span class="java&#45;keyword">null</span> unique,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table user (
+   id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   account_expired bit not <span class="java&#45;keyword">null</span>,
+   account_locked bit not <span class="java&#45;keyword">null</span>,
+   enabled bit not <span class="java&#45;keyword">null</span>,
+   password varchar(255) not <span class="java&#45;keyword">null</span>,
+   password_expired bit not <span class="java&#45;keyword">null</span>,
+   username varchar(255) not <span class="java&#45;keyword">null</span> unique,
+   primary key (id)
+) ENGINE=InnoDB;<p class="paragraph"/>create table user_role (
+   role_id bigint not <span class="java&#45;keyword">null</span>,
+   user_id bigint not <span class="java&#45;keyword">null</span>,
+   date_updated datetime not <span class="java&#45;keyword">null</span>,
+   primary key (role_id, user_id)
+) ENGINE=InnoDB;<p class="paragraph"/>alter table user_role add index FK143BF46A52388A1A (role_id),
+add constraint FK143BF46A52388A1A foreign key (role_id) references role (id);<p class="paragraph"/>alter table user_role add index FK143BF46AF7634DFA (user_id),
+add constraint FK143BF46AF7634DFA foreign key (user_id) references user (id);</pre></div><p class="paragraph"/>The <code>user_role</code> table has an extra column (<code>date_updated</code>) and would be ignored by default, but since we configured it with the <code>grails.plugin.reveng.manyToManyTables</code> property it's resolved correctly:<p class="paragraph"/><div class="code"><pre>class Role &#123;<p class="paragraph"/>   <span class="java&#45;object">String</span> authority<p class="paragraph"/>   <span class="java&#45;keyword">static</span> hasMany = &#91;users: User&#93;
+   <span class="java&#45;keyword">static</span> belongsTo = User<p class="paragraph"/>   <span class="java&#45;keyword">static</span> constraints = &#123;
+      authority unique: <span class="java&#45;keyword">true</span>
+   &#125;
+&#125;</pre></div><p class="paragraph"/><div class="code"><pre>class User &#123;<p class="paragraph"/>   <span class="java&#45;object">boolean</span> accountExpired
+   <span class="java&#45;object">boolean</span> accountLocked
+   <span class="java&#45;object">boolean</span> enabled
+   <span class="java&#45;object">String</span> password
+   <span class="java&#45;object">boolean</span> passwordExpired
+   <span class="java&#45;object">String</span> username<p class="paragraph"/>   <span class="java&#45;keyword">static</span> hasMany = &#91;roles: Role&#93;<p class="paragraph"/>   <span class="java&#45;keyword">static</span> constraints = &#123;
+      username unique: <span class="java&#45;keyword">true</span>
+   &#125;
+&#125;</pre></div><p class="paragraph"/><h4>Thing domain class.</h4><p class="paragraph"/>The <code>thing</code> table has a non-standard primary key column (<code>thing_id</code>) and a unique constraint on the <code>email</code> column. The <code>name</code> column is nullable, and is defined as <code>varchar(123)</code>:<p class="paragraph"/><div class="code"><pre>create table thing (
+   thing_id bigint not <span class="java&#45;keyword">null</span> auto_increment,
+   version bigint not <span class="java&#45;keyword">null</span>,
+   email varchar(255) not <span class="java&#45;keyword">null</span> unique,
+   float_value <span class="java&#45;object">float</span> not <span class="java&#45;keyword">null</span>,
+   name varchar(123),
+   primary key (thing_id)
+) ENGINE=InnoDB;</pre></div><p class="paragraph"/>and it generates this domain class:<p class="paragraph"/><div class="code"><pre>class Thing &#123;<p class="paragraph"/>   <span class="java&#45;object">String</span> email
+   <span class="java&#45;object">float</span> floatValue
+   <span class="java&#45;object">String</span> name<p class="paragraph"/>   <span class="java&#45;keyword">static</span> mapping = &#123;
+      id column: <span class="java&#45;quote">"thing_id"</span>
+   &#125;<p class="paragraph"/>   <span class="java&#45;keyword">static</span> constraints = &#123;
+      email unique: <span class="java&#45;keyword">true</span>
+      name nullable: <span class="java&#45;keyword">true</span>, maxSize: 123
+   &#125;
+&#125;</pre></div><p class="paragraph"/><h4>9. Update a table and re-run the script.</h4><p class="paragraph"/>Add a new column to the <code>thing</code> table:<p class="paragraph"/><div class="code"><pre>alter table thing add new_column <span class="java&#45;object">boolean</span>;</pre></div><p class="paragraph"/>We'll re-run the script but need to configure it to generate the updated domain class in a different directory from the default so we can compare with the original. To configure this, set the value of the <code>grails.plugin.reveng.destDir</code> property in <code>grails-app/conf/Config.groovy</code>:<p class="paragraph"/><div class="code"><pre>grails.plugin.reveng.destDir = 'temp_reverse_engineer'</pre></div><p class="paragraph"/>Also change the configuration to only include the <code>thing</code> table:<p class="paragraph"/><div class="code"><pre>grails.plugin.reveng.includeTables = &#91;'thing'&#93;</pre></div><p class="paragraph"/>Re-eun the reverse-engineer script:<p class="paragraph"/><div class="code"><pre>grails reverse&#45;engineer</pre></div><p class="paragraph"/>The script will generate this domain class in the temp_reverse_engineer/com/revengtest folder:<p class="paragraph"/><div class="code"><pre>class Thing &#123;<p class="paragraph"/>	<span class="java&#45;object">String</span> email
+	<span class="java&#45;object">float</span> floatValue
+	<span class="java&#45;object">String</span> name
+	<span class="java&#45;object">Boolean</span> newColumn<p class="paragraph"/>	<span class="java&#45;keyword">static</span> mapping = &#123;
+		id column: <span class="java&#45;quote">"thing_id"</span>
+	&#125;<p class="paragraph"/>	<span class="java&#45;keyword">static</span> constraints = &#123;
+		email unique: <span class="java&#45;keyword">true</span>
+		name nullable: <span class="java&#45;keyword">true</span>, maxSize: 123
+		newColumn nullable: <span class="java&#45;keyword">true</span>
+	&#125;
+&#125;</pre></div><p class="paragraph"/>The domain class has a new <code>Boolean newColumn</code> field and a <code>nullable</code> constraint. Since this generated the correct changes it's safe to move replace the previous domain class with this one.<p class="paragraph"/>
+    
+<script type="text/javascript">
+	var _gaq = _gaq || [];
+	_gaq.push(['_setAccount', 'UA-16219500-1']);
+	_gaq.push(['_trackPageview']);
+
+	(function() {
+		var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+		ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+		var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+	})();
+</script>
+</body>
+</html>
