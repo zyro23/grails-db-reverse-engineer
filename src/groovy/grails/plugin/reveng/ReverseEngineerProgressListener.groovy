@@ -12,12 +12,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-class ReverseEngineerGrailsPlugin {
-	String version = '0.2'
-	String grailsVersion = '1.3.0 > *'
-	String author = 'Burt Beckwith'
-	String authorEmail = 'beckwithb@vmware.com'
-	String title = 'Grails Reverse Engineering Plugin'
-	String description = 'Reverse-engineers a database to Grails domain classes.'
-	String documentation = 'http://grails.org/plugin/reverse-engineer'
+package grails.plugin.reveng
+
+import org.apache.log4j.Logger
+import org.hibernate.cfg.reveng.ProgressListener
+
+/**
+ * @author <a href='mailto:burt@burtbeckwith.com'>Burt Beckwith</a>
+ */
+class ReverseEngineerProgressListener implements ProgressListener {
+
+	private Logger log = Logger.getLogger(getClass())
+
+	void startSubTask(String name) {
+		log.info name
+	}
 }
