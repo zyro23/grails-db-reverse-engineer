@@ -153,7 +153,7 @@ class GrailsReverseEngineeringStrategy extends DefaultReverseEngineeringStrategy
 			log.debug "using $table.name as many-to-many table"
 			return true
 		}
-		super.isManyToManyTable(table)
+		super.isManyToManyTable table
 	}
 
 	/**
@@ -193,30 +193,33 @@ class GrailsReverseEngineeringStrategy extends DefaultReverseEngineeringStrategy
 	void addIncludeTableAntPattern(String pattern) { includeTableAntPatterns << pattern }
 
 	/**
-	 * Register a column name to exclude.
+	 * Register one or more column names to exclude.
 	 * @param table the table name
-	 * @param name the column name
+	 * @param names the column names
 	 */
-	void addExcludeColumn(String table, String name) {
-		getOrCreateList(excludeColumns, table) << name
+	void addExcludeColumns(String table, List<String> names) {
+		getOrCreateList(excludeColumns, table).addAll names
 	}
 
 	/**
-	 * Register a regex pattern for column names to ignore.
+	 * Register one or more regex patterns for column names to ignore.
 	 * @param table the table name
-	 * @param pattern the column name pattern
+	 * @param patterns the column name patterns
 	 */
-	void addExcludeColumnRegex(String table, String pattern) {
-		getOrCreateList(excludeColumnRegexes, table) << Pattern.compile(pattern)
+	void addExcludeColumnRegexes(String table, List<String> patterns) {
+		def list = getOrCreateList(excludeColumnRegexes, table)
+		for (String pattern in patterns) {
+			list << Pattern.compile(pattern)
+		}
 	}
 
 	/**
-	 * Register an Ant-style pattern for column names to ignore.
+	 * Register one or more Ant-style patterns for column names to ignore.
 	 * @param table the table name
-	 * @param pattern the column name pattern
+	 * @param patterns the column name patterns
 	 */
-	void addExcludeColumnAntPattern(String table, String pattern) {
-		getOrCreateList(excludeColumnAntPatterns, table) << pattern
+	void addExcludeColumnAntPatterns(String table, List<String> patterns) {
+		getOrCreateList(excludeColumnAntPatterns, table).addAll patterns
 	}
 
 	private List getOrCreateList(Map map, String key) {

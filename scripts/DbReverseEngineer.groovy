@@ -70,11 +70,11 @@ target(dbReverseEngineer: 'Reverse-engineers a database and creates domain class
 
 	revengConfig.excludeTableAntPatterns.each { pattern -> strategy.addExcludeTableAntPattern pattern }
 
-	revengConfig.excludeColumns.each { table, column -> strategy.addExcludeColumn table, column }
+	revengConfig.excludeColumns.each { table, columns -> strategy.addExcludeColumns table, columns }
 
-	revengConfig.excludeColumnRegexes.each { table, pattern -> strategy.addExcludeColumnRegex table, pattern }
+	revengConfig.excludeColumnRegexes.each { table, patterns -> strategy.addExcludeColumnRegexes table, patterns }
 
-	revengConfig.excludeColumnAntPatterns.each { table, pattern -> strategy.addExcludeColumnAntPattern table, pattern }
+	revengConfig.excludeColumnAntPatterns.each { table, patterns -> strategy.addExcludeColumnAntPatterns table, patterns }
 
 	revengConfig.mappedManyToManyTables.each { table -> strategy.addMappedManyToManyTable table }
 
@@ -82,9 +82,9 @@ target(dbReverseEngineer: 'Reverse-engineers a database and creates domain class
 		strategy.alwaysMapManyToManyTables = revengConfig.alwaysMapManyToManyTables
 	}
 
-	ant.echo message: "Starting reverse engineering, connecting to '$reenigne.url' as '$reenigne.username' ..."
+	ant.echo message: "Starting database reverse engineering, connecting to '$reenigne.url' as '$reenigne.username' ..."
 	reenigne.execute()
-	ant.echo message: 'Finished reverse engineering'
+	ant.echo message: 'Finished database reverse engineering'
 }
 
 setDefaultTarget dbReverseEngineer
