@@ -37,6 +37,16 @@ import org.hibernate.type.LongType
  */
 class GrailsEntityPOJOClass extends EntityPOJOClass {
 
+	private static final Map<String, String> typeNameReplacements = [
+		'boolean': 'Boolean',
+		'byte': 'Byte',
+		'char': 'Char',
+		'double': 'Double',
+		'int': 'Integer',
+		'float': 'Float',
+		'long': 'Long',
+		'short': 'Short']
+
 	private PersistentClass clazz
 	private Cfg2HbmTool c2h
 	private Configuration configuration
@@ -463,6 +473,11 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 	
 	String renderImplements() {
 		getIdentifierProperty().columnSpan > 1 ? ' implements Serializable ' : ' '
+	}
+
+	String getJavaTypeName(Property p, boolean useGenerics) {
+		String name = super.getJavaTypeName(p, useGenerics)
+		typeNameReplacements[name] ?: name
 	}
 
 	private String findManyToManyOtherSide(Property prop) {
