@@ -542,20 +542,20 @@ The script will generate this domain class in the temp_reverse_engineer/com/reve
 {code}
 class Thing {
 
-	String email
-	float floatValue
-	String name
-	Boolean newColumn
+    String email
+    float floatValue
+    String name
+    Boolean newColumn
 
-	static mapping = {
-		id column: "thing_id"
-	}
+    static mapping = {
+        id column: "thing_id"
+    }
 
-	static constraints = {
-		email unique: true
-		name nullable: true, maxSize: 123
-		newColumn nullable: true
-	}
+    static constraints = {
+        email unique: true
+        name nullable: true, maxSize: 123
+        newColumn nullable: true
+    }
 }
 {code}
 
