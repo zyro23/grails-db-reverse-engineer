@@ -40,7 +40,7 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 	private static final Map<String, String> typeNameReplacements = [
 		'boolean': 'Boolean',
 		'byte': 'Byte',
-		'char': 'Char',
+		'char': 'Character',
 		'double': 'Double',
 		'int': 'Integer',
 		'float': 'Float',
