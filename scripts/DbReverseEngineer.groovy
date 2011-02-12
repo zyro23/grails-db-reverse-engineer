@@ -13,20 +13,19 @@
  * limitations under the License.
  */
 
-import org.codehaus.groovy.grails.commons.ConfigurationHolder as CH
-
 includeTargets << grailsScript('_GrailsBootstrap')
 
 /**
  * @author <a href='mailto:burt@burtbeckwith.com'>Burt Beckwith</a>
  */
-target(reverseEngineer: 'Reverse-engineers a database and creates domain classes') {
+target(dbReverseEngineer: 'Reverse-engineers a database and creates domain classes') {
 	depends(packageApp, loadApp)
 
 	createConfig()
-	def dsConfig = CH.config.dataSource
+	def dsConfig = config.dataSource
 
 	def reenigne = classLoader.loadClass('grails.plugin.reveng.Reenigne').newInstance()
+	reenigne.grailsConfig = config
 	reenigne.driverClass = dsConfig.driverClassName ?: 'org.hsqldb.jdbcDriver' // 'org.h2.Driver'
 	reenigne.password = dsConfig.password ?: ''
 	reenigne.username = dsConfig.username ?: 'sa'
@@ -38,7 +37,7 @@ target(reverseEngineer: 'Reverse-engineers a database and creates domain classes
 		reenigne.dialect = dsConfig.dialect.name
 	}
 
-	def revengConfig = CH.config.grails.plugin.reveng
+	def revengConfig = config.grails.plugin.reveng
 	reenigne.packageName = revengConfig.packageName ?: metadata['app.name']
 	reenigne.destDir = new File(basedir, revengConfig.destDir ?: 'grails-app/domain')
 	if (revengConfig.defaultSchema) {
@@ -71,17 +70,21 @@ target(reverseEngineer: 'Reverse-engineers a database and creates domain classes
 
 	revengConfig.excludeTableAntPatterns.each { pattern -> strategy.addExcludeTableAntPattern pattern }
 
-	revengConfig.excludeColumns.each { table, column -> strategy.addExcludeColumn table, column }
+	revengConfig.excludeColumns.each { table, columns -> strategy.addExcludeColumns table, columns }
 
-	revengConfig.excludeColumnRegexes.each { table, pattern -> strategy.addExcludeColumnRegex table, pattern }
+	revengConfig.excludeColumnRegexes.each { table, patterns -> strategy.addExcludeColumnRegexes table, patterns }
 
-	revengConfig.excludeColumnAntPatterns.each { table, pattern -> strategy.addExcludeColumnAntPattern table, pattern }
+	revengConfig.excludeColumnAntPatterns.each { table, patterns -> strategy.addExcludeColumnAntPatterns table, patterns }
 
-	revengConfig.mappedManyToManyTable.each { table -> strategy.addMappedManyToManyTable table }
+	revengConfig.mappedManyToManyTables.each { table -> strategy.addMappedManyToManyTable table }
 
-	ant.echo message: "Starting reverse engineering, connecting to '$reenigne.url' as '$reenigne.username' ..."
+	if (revengConfig.alwaysMapManyToManyTables instanceof Boolean) {
+		strategy.alwaysMapManyToManyTables = revengConfig.alwaysMapManyToManyTables
+	}
+
+	ant.echo message: "Starting database reverse engineering, connecting to '$reenigne.url' as '$reenigne.username' ..."
 	reenigne.execute()
-	ant.echo message: 'Finished reverse engineering'
+	ant.echo message: 'Finished database reverse engineering'
 }
 
-setDefaultTarget reverseEngineer
+setDefaultTarget dbReverseEngineer
