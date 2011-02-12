@@ -9,6 +9,8 @@ ${pojo.renderHashCodeAndEquals()}
 
 ${pojo.renderMany()}
 
+${pojo.renderMappedBy()}
+
 ${pojo.renderMapping()}
 
 ${pojo.renderConstraints()}

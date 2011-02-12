@@ -352,6 +352,69 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 
 	String renderMany() {
 
+		def belongs = new TreeSet()
+		def hasMany = new TreeSet()
+		findBelongsToAndHasMany belongs, hasMany
+
+		if (belongs || hasMany) {
+			def many = new StringBuilder()
+			if (hasMany) {
+				many.append combine('static hasMany = [', ', ', ']', hasMany, true)
+				many.append newline
+			}
+			if (belongs) {
+				many.append combine('static belongsTo = [', ', ', ']', belongs)
+				many.append newline
+			}
+			return many.toString()
+		}
+
+		''
+	}
+
+	String renderMappedBy() {
+		def belongs = new TreeSet()
+		def hasMany = new TreeSet()
+		findBelongsToAndHasMany belongs, hasMany
+
+		if (!hasMany) {
+			return ''
+		}
+
+		def grouped = [:]
+		for (many in hasMany) {
+			String[] parts = many.split(':')
+			String className = parts[1].trim()
+			def propNames = grouped[className]
+			if (!propNames) {
+				propNames = []
+				grouped[className] = propNames
+			}
+			propNames << parts[0].trim()
+		}
+
+		def mappedBy = new TreeSet()
+		Set classNames = []
+		grouped.each { className, propNames ->
+			if (propNames.size() > 1) {
+				for (propName in propNames) {
+					mappedBy << propName + ': "TODO"'
+				}
+				classNames << className
+			}
+		}
+
+		if (!classNames) {
+			return ''
+		}
+
+		"\t// TODO you have multiple hasMany references for class(es) $classNames " + newline +
+		"\t//      so you'll need to disambiguate them with the 'mappedBy' property:" + newline +
+		combine('static mappedBy = [', ', ', ']', mappedBy, true) + newline
+	}
+
+	private void findBelongsToAndHasMany(Set belongs, Set hasMany) {
+
 		def revengConfig = grailsConfig.grails.plugin.reveng
 		boolean bidirectionalManyToOne = revengConfig.bidirectionalManyToOne instanceof Boolean ?
 				revengConfig.bidirectionalManyToOne : true
@@ -361,8 +424,6 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 		def idProperty = getIdentifierProperty()
 		def versionProperty = getVersionProperty()
 
-		def belongs = []
-		def hasMany = []
 		def strategy = GrailsReverseEngineeringStrategy.INSTANCE
 		super.getAllPropertiesIterator().each { prop ->
 			if (prop == versionProperty || prop == idProperty) {
@@ -390,20 +451,7 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 			}
 		}
 
-		if (belongs || hasMany) {
-			def many = new StringBuilder()
-			if (hasMany) {
-				many.append combine('\tstatic hasMany = [', ', ', ']', hasMany)
-				many.append newline
-			}
-			if (belongs) {
-				many.append combine('\tstatic belongsTo = [', ', ', ']', belongs)
-				many.append newline
-			}
-			return many.toString()
-		}
-
-		''
+		belongs.remove classShortName(getMappedClassName())
 	}
 
 	private boolean isPartOfPrimaryKey(Property prop) {
@@ -497,13 +545,24 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 		className
 	}
 
-	private String combine(String start, String delim, String end, things) {
-		def buffer = new StringBuilder(start)
+	private String combine(String start, String delim, String end, things, boolean lineUp = false) {
+		def buffer = new StringBuilder('\t')
+		
+		String pad
+		if (lineUp) {
+			def bufferPad = new StringBuilder()
+			bufferPad.append newline
+			bufferPad.append '\t'
+			start.length().times { bufferPad.append ' ' }
+			pad = bufferPad.toString()
+		}
+		
+		buffer.append start
 		String delimiter = ''
 		things.each {
 			buffer.append delimiter
 			buffer.append it
-			delimiter = delim
+			delimiter = lineUp ? delim.trim() + pad : delim
 		}
 		buffer.append end
 		buffer.toString()
