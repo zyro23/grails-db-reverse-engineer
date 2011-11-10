@@ -14,8 +14,6 @@
  */
 package grails.plugin.reveng
 
-import java.sql.SQLException
-
 import org.hibernate.cfg.JDBCBinder
 import org.hibernate.cfg.JDBCMetaDataConfiguration
 import org.hibernate.cfg.JDBCReaderFactory
@@ -49,7 +47,10 @@ class GrailsJdbcBinder extends JDBCBinder {
 	}
 
 	@Override
-	DatabaseCollector readDatabaseSchema(String catalog, String schema) throws SQLException {
+	DatabaseCollector readDatabaseSchema(String catalog, String schema) {
+		catalog = catalog ?: settings.getDefaultCatalogName()
+		schema = schema ?: settings.getDefaultSchemaName()
+
 		MetaDataDialect mdd = JDBCReaderFactory.newMetaDataDialect(
 				settings.dialect, cfg.getProperties())
 		JDBCReader reader = new JDBCReader(mdd, settings.connectionProvider, settings.getSQLExceptionConverter(),
