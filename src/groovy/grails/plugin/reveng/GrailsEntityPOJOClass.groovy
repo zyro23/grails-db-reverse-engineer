@@ -35,28 +35,28 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 
 	private static final Map<String, String> typeNameReplacements = [
 		'boolean': 'Boolean',
-		'byte': 'Byte',
-		'char': 'Character',
-		'double': 'Double',
-		'int': 'Integer',
-		'float': 'Float',
-		'long': 'Long',
-		'short': 'Short']
+		'byte':    'Byte',
+		'char':    'Character',
+		'double':  'Double',
+		'int':     'Integer',
+		'float':   'Float',
+		'long':    'Long',
+		'short':   'Short']
 
 	private PersistentClass clazz
 	private Cfg2HbmTool c2h
 	private Configuration configuration
-	private ConfigObject grailsConfig
+	private ConfigObject revengConfig
 	private String newline = System.getProperty('line.separator')
 	private newProperties = []
 
 	GrailsEntityPOJOClass(PersistentClass clazz, Cfg2JavaTool cfg, Cfg2HbmTool c2h,
-			Configuration configuration, ConfigObject grailsConfig) {
+			Configuration configuration, ConfigObject revengConfig) {
 		super(clazz, cfg)
 		this.clazz = clazz
 		this.c2h = c2h
 		this.configuration = configuration
-		this.grailsConfig = grailsConfig
+		this.revengConfig = revengConfig
 	}
 
 	@Override
@@ -411,7 +411,6 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 
 	private void findBelongsToAndHasMany(Set belongs, Set hasMany) {
 
-		def revengConfig = grailsConfig.grails.plugin.reveng
 		boolean bidirectionalManyToOne = revengConfig.bidirectionalManyToOne instanceof Boolean ?
 				revengConfig.bidirectionalManyToOne : true
 		boolean mapManyToManyJoinTable = revengConfig.mapManyToManyJoinTable instanceof Boolean ?

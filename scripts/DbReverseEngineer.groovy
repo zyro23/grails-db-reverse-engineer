@@ -49,8 +49,6 @@ private Map buildMergedConfig() {
 
 	def dsConfig = config.dataSource
 
-	mergedConfig.config = config
-
 	mergedConfig.driverClassName = dsConfig.driverClassName ?: 'org.h2.Driver'
 	mergedConfig.password = dsConfig.password ?: ''
 	mergedConfig.username = dsConfig.username ?: 'sa'

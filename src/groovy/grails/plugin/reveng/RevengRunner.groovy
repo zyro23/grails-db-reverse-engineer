@@ -22,7 +22,7 @@ class RevengRunner {
 	void run(config, String appName) {
 
 		Reenigne reenigne = new Reenigne()
-		reenigne.grailsConfig = config.config
+		reenigne.revengConfig = config
 		reenigne.driverClass = config.driverClassName
 		reenigne.password = config.password
 		reenigne.username = config.username
