@@ -43,6 +43,7 @@ class GrailsReverseEngineeringStrategy extends DefaultReverseEngineeringStrategy
 	private Map<String, String> versionColumnNames = [:]
 	private Set<String> manyToManyTables = []
 	private Set<String> mappedManyToManyTables = []
+	private boolean alwaysMapManyToManyTables
 	private Map<String, String> belongsTos = [:]
 	private AntPathMatcher antMatcher = new AntPathMatcher()
 
@@ -141,7 +142,7 @@ class GrailsReverseEngineeringStrategy extends DefaultReverseEngineeringStrategy
 
 	@Override
 	boolean isManyToManyTable(Table table) {
-		if (mappedManyToManyTables.contains(table.name)) {
+		if (alwaysMapManyToManyTables || mappedManyToManyTables.contains(table.name)) {
 			return false
 		}
 
@@ -259,6 +260,15 @@ class GrailsReverseEngineeringStrategy extends DefaultReverseEngineeringStrategy
 	 */
 	void addMappedManyToManyTable(String name) {
 		mappedManyToManyTables << name
+	}
+
+	/**
+	 * Set whether to always map the many-to-many join tables (instead of individually
+	 * specifying them with addMappedManyToManyTable()).
+	 * @param map if true always map join tables
+	 */
+	void setAlwaysMapManyToManyTables(boolean map) {
+		alwaysMapManyToManyTables = map
 	}
 
 	/**
