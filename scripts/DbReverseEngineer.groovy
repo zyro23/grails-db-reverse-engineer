@@ -1,4 +1,4 @@
-/* Copyright 2006-2010 the original author or authors.
+/* Copyright 2010-2011 SpringSource.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,78 +13,191 @@
  * limitations under the License.
  */
 
+import grails.util.BuildSettings
+import grails.util.GrailsUtil
+
+import org.apache.ivy.core.report.ResolveReport
+import org.codehaus.groovy.grails.compiler.Grailsc
+import org.codehaus.groovy.grails.resolve.IvyDependencyManager
+import org.codehaus.groovy.util.ReleaseInfo
+
 includeTargets << grailsScript('_GrailsBootstrap')
+
+USAGE = 'grails db-reverse-engineer'
 
 /**
  * @author <a href='mailto:burt@burtbeckwith.com'>Burt Beckwith</a>
  */
 target(dbReverseEngineer: 'Reverse-engineers a database and creates domain classes') {
-	depends(packageApp, loadApp)
+	depends packageApp, loadApp
 
-	createConfig()
+	try {
+		createConfig()
+
+		def mergedConfig = buildMergedConfig()
+		String configPath = writeConfig(mergedConfig)
+
+		event('StatusUpdate', ["Starting database reverse engineering, connecting to '$mergedConfig.url' as '$mergedConfig.username' ..."])
+
+		def jars = resolveJars(config.grails.plugin.reveng)
+		File revengclasses = new File(buildSettings.projectTargetDir, 'revengclasses')
+		revengclasses.deleteDir()
+		revengclasses.mkdirs()
+
+		ant.path(id: 'reveng.cp') { jars.each { pathelement(path: it) } }
+
+		ant.taskdef(name: 'groovyc', classname: Grailsc.name)
+
+		ant.groovyc(destdir: revengclasses.path, verbose: true, listfiles: true, classpathref: 'reveng.cp', includeAntRuntime: false) {
+			javac(classpathref: 'reveng.cp', includeAntRuntime: false)
+			src(path: "$dbReverseEngineerPluginDir/src/groovy")
+		}
+
+		ant.copy(todir: revengclasses.path) {
+			fileset(dir: "$dbReverseEngineerPluginDir/src/java", excludes: '**/*.java')
+		}
+
+		try {
+			ant.java(classname: 'grails.plugin.reveng.RevengRunner', fork: true,
+			         failonerror: true, maxmemory: '512m', outputproperty: 'reveng.output') {
+				arg(value: configPath)
+				arg(value: metadata['app.name'])
+				ant.classpath {
+					path(refid: 'reveng.cp')
+					pathelement(location: revengclasses.absolutePath)
+				}
+			}
+		}
+		catch (e) {
+			event('StatusError', ["Error running forked reverse-engineer script: $e.message"])
+		}
+		println "\n${ant.project.properties['reveng.output']}\n"
+
+		event('StatusUpdate', ['Finished database reverse engineering'])
+	}
+	catch (e) {
+		GrailsUtil.deepSanitize e
+		throw e
+	}
+}
+
+private List<String> resolveJars(revengConfig) {
+
+	def deps = [
+		'org.hibernate:hibernate-core:3.3.1.GA',
+		'org.hibernate:hibernate-commons-annotations:3.1.0.GA',
+		'freemarker:freemarker:2.3.8',
+		'org.hibernate:hibernate-tools:3.2.4.GA',
+		'org.hibernate:jtidy:r8-20060801',
+		'org.beanshell:bsh:2.0b4',
+		'dom4j:dom4j:1.6.1',
+		'commons-logging:commons-logging:1.1.1',
+		'log4j:log4j:1.2.15',
+		// need to use current Grails version of Groovy because of the serialization
+		"org.codehaus.groovy:groovy-all:${ReleaseInfo.version}",
+		'org.slf4j:slf4j-api:1.5.8',
+		'org.slf4j:slf4j-log4j12:1.5.8',
+		'org.springframework:spring-core:3.0.3.RELEASE',
+		'org.grails:grails-bootstrap:1.3.3',
+		'org.grails:grails-core:1.3.3']
+
+	if (!revengConfig.jdbcDriverJarDep && !revengConfig.jdbcDriverJarPath) {
+		event('StatusError', ["Neither grails.plugin.reveng.jdbcDriverJarDep or grails.plugin.reveng.jdbcDriverJarPath are set, so there's no JDBC driver configured; you'll most likely see an unrelated error"])
+	}
+
+	if (revengConfig.jdbcDriverJarDep) {
+		deps << revengConfig.jdbcDriverJarDep
+	}
+
+	def manager = new IvyDependencyManager('reveng', '0.1', new BuildSettings())
+	manager.parseDependencies {
+		log revengConfig.ivyLogLevel ?: 'warn'
+		repositories {
+			mavenLocal()
+			mavenCentral()
+		}
+		dependencies {
+			compile(*deps) {
+				transitive = false
+			}
+		}
+	}
+
+	ResolveReport report = manager.resolveDependencies()
+	if (report.hasError()) {
+		// TODO
+		return null
+	}
+
+	def paths = []
+	for (File file in report.allArtifactsReports.localFile) {
+		if (file) paths << file.path
+	}
+
+	if (revengConfig.jdbcDriverJarPath) {
+		paths << revengConfig.jdbcDriverJarPath
+	}
+
+	paths
+}
+
+// serialize the config to a file so it's available to the forked process
+private String writeConfig(Map mergedConfig) {
+	File file = File.createTempFile('reveng.config', '.ser')
+	file.deleteOnExit()
+	file.withObjectOutputStream { it.writeObject mergedConfig }
+	file.path
+}
+
+private Map buildMergedConfig() {
+
+	def mergedConfig = [:]
+
 	def dsConfig = config.dataSource
 
-	def reenigne = classLoader.loadClass('grails.plugin.reveng.Reenigne').newInstance()
-	reenigne.grailsConfig = config
-	reenigne.driverClass = dsConfig.driverClassName ?: 'org.hsqldb.jdbcDriver' // 'org.h2.Driver'
-	reenigne.password = dsConfig.password ?: ''
-	reenigne.username = dsConfig.username ?: 'sa'
-	reenigne.url = dsConfig.url ?: 'jdbc:hsqldb:mem:testDB' // 'jdbc:h2:mem:testDB'
+	mergedConfig.driverClassName = dsConfig.driverClassName ?: 'org.h2.Driver'
+	mergedConfig.password = dsConfig.password ?: ''
+	mergedConfig.username = dsConfig.username ?: 'sa'
+	mergedConfig.url = dsConfig.url ?: 'jdbc:h2:mem:testDB'
 	if (dsConfig.dialect instanceof String) {
-		reenigne.dialect = dsConfig.dialect
+		mergedConfig.dialect = dsConfig.dialect
 	}
 	else if (dsConfig.dialect instanceof Class) {
-		reenigne.dialect = dsConfig.dialect.name
+		mergedConfig.dialect = dsConfig.dialect.name
 	}
 
 	def revengConfig = config.grails.plugin.reveng
-	reenigne.packageName = revengConfig.packageName ?: metadata['app.name']
-	reenigne.destDir = new File(basedir, revengConfig.destDir ?: 'grails-app/domain')
+	mergedConfig.packageName = revengConfig.packageName ?: metadata['app.name']
+	mergedConfig.destDir = new File(basedir, revengConfig.destDir ?: 'grails-app/domain').canonicalPath
 	if (revengConfig.defaultSchema) {
-		reenigne.defaultSchema = revengConfig.defaultSchema
+		mergedConfig.defaultSchema = revengConfig.defaultSchema
 	}
 	if (revengConfig.defaultCatalog) {
-		reenigne.defaultCatalog = revengConfig.defaultCatalog
+		mergedConfig.defaultCatalog = revengConfig.defaultCatalog
 	}
 	if (revengConfig.overwriteExisting instanceof Boolean) {
-		reenigne.overwrite = revengConfig.overwriteExisting
+		mergedConfig.overwriteExisting = revengConfig.overwriteExisting
 	}
-
-	def strategy = reenigne.reverseEngineeringStrategy
-
-	revengConfig.versionColumns.each { table, column -> strategy.addVersionColumn table, column }
-
-	revengConfig.manyToManyTables.each { table -> strategy.addManyToManyTable table }
-
-	revengConfig.manyToManyBelongsTos.each { manyTable, belongsTable -> strategy.setManyToManyBelongsTo manyTable, belongsTable }
-
-	revengConfig.includeTables.each { table -> strategy.addIncludeTable table }
-
-	revengConfig.includeTableRegexes.each { pattern -> strategy.addIncludeTableRegex pattern }
-
-	revengConfig.includeTableAntPatterns.each { pattern -> strategy.addIncludeTableAntPattern pattern }
-
-	revengConfig.excludeTables.each { table -> strategy.addExcludeTable table }
-
-	revengConfig.excludeTableRegexes.each { pattern -> strategy.addExcludeTableRegex pattern }
-
-	revengConfig.excludeTableAntPatterns.each { pattern -> strategy.addExcludeTableAntPattern pattern }
-
-	revengConfig.excludeColumns.each { table, columns -> strategy.addExcludeColumns table, columns }
-
-	revengConfig.excludeColumnRegexes.each { table, patterns -> strategy.addExcludeColumnRegexes table, patterns }
-
-	revengConfig.excludeColumnAntPatterns.each { table, patterns -> strategy.addExcludeColumnAntPatterns table, patterns }
-
-	revengConfig.mappedManyToManyTables.each { table -> strategy.addMappedManyToManyTable table }
+	else {
+		mergedConfig.overwriteExisting = true
+	}
 
 	if (revengConfig.alwaysMapManyToManyTables instanceof Boolean) {
-		strategy.alwaysMapManyToManyTables = revengConfig.alwaysMapManyToManyTables
+		mergedConfig.alwaysMapManyToManyTables = revengConfig.alwaysMapManyToManyTables
+	}
+	else {
+		mergedConfig.alwaysMapManyToManyTables = false
 	}
 
-	ant.echo message: "Starting database reverse engineering, connecting to '$reenigne.url' as '$reenigne.username' ..."
-	reenigne.execute()
-	ant.echo message: 'Finished database reverse engineering'
+	for (String name in ['versionColumns', 'manyToManyTables', 'manyToManyBelongsTos',
+	                     'includeTables', 'includeTableRegexes', 'includeTableAntPatterns',
+	                     'excludeTables', 'excludeTableRegexes', 'excludeTableAntPatterns',
+	                     'excludeColumns', 'excludeColumnRegexes', 'excludeColumnAntPatterns',
+	                     'mappedManyToManyTables']) {
+		mergedConfig[name] = revengConfig[name]
+	}
+
+	mergedConfig
 }
 
 setDefaultTarget dbReverseEngineer

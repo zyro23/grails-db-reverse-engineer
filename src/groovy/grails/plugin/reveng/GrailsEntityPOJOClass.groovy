@@ -1,4 +1,4 @@
-/* Copyright 2006-2010 the original author or authors.
+/* Copyright 2010-2011 SpringSource.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,7 @@
  */
 package grails.plugin.reveng
 
-import grails.util.GrailsNameUtils
-
 import org.hibernate.cfg.Configuration
-import org.hibernate.cfg.Environment
 import org.hibernate.mapping.Column
 import org.hibernate.mapping.ForeignKey
 import org.hibernate.mapping.ManyToOne
@@ -25,7 +22,6 @@ import org.hibernate.mapping.PersistentClass
 import org.hibernate.mapping.Property
 import org.hibernate.mapping.Table
 import org.hibernate.mapping.UniqueKey
-import org.hibernate.mapping.Value
 import org.hibernate.tool.hbm2x.Cfg2HbmTool
 import org.hibernate.tool.hbm2x.Cfg2JavaTool
 import org.hibernate.tool.hbm2x.pojo.EntityPOJOClass
@@ -39,28 +35,28 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 
 	private static final Map<String, String> typeNameReplacements = [
 		'boolean': 'Boolean',
-		'byte': 'Byte',
-		'char': 'Character',
-		'double': 'Double',
-		'int': 'Integer',
-		'float': 'Float',
-		'long': 'Long',
-		'short': 'Short']
+		'byte':    'Byte',
+		'char':    'Character',
+		'double':  'Double',
+		'int':     'Integer',
+		'float':   'Float',
+		'long':    'Long',
+		'short':   'Short']
 
 	private PersistentClass clazz
 	private Cfg2HbmTool c2h
 	private Configuration configuration
-	private ConfigObject grailsConfig
+	private ConfigObject revengConfig
 	private String newline = System.getProperty('line.separator')
 	private newProperties = []
 
 	GrailsEntityPOJOClass(PersistentClass clazz, Cfg2JavaTool cfg, Cfg2HbmTool c2h,
-			Configuration configuration, ConfigObject grailsConfig) {
+			Configuration configuration, ConfigObject revengConfig) {
 		super(clazz, cfg)
 		this.clazz = clazz
 		this.c2h = c2h
 		this.configuration = configuration
-		this.grailsConfig = grailsConfig
+		this.revengConfig = revengConfig
 	}
 
 	@Override
@@ -415,7 +411,6 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 
 	private void findBelongsToAndHasMany(Set belongs, Set hasMany) {
 
-		def revengConfig = grailsConfig.grails.plugin.reveng
 		boolean bidirectionalManyToOne = revengConfig.bidirectionalManyToOne instanceof Boolean ?
 				revengConfig.bidirectionalManyToOne : true
 		boolean mapManyToManyJoinTable = revengConfig.mapManyToManyJoinTable instanceof Boolean ?
@@ -471,7 +466,7 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 	private String findRealIdName(Property prop) {
 		if (c2j.isComponent(getIdentifierProperty()) &&
 					GrailsReverseEngineeringStrategy.INSTANCE.isReallyManyToManyTable(clazz.table)) {
-					
+
 			for (newProp in newProperties) {
 				if (newProp.name + 'Id' == prop.name) {
 					return newProp.name
@@ -518,7 +513,7 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 	String renderClassStart() {
 		"class ${getDeclarationName()}${renderImplements()}{"
 	}
-	
+
 	String renderImplements() {
 		getIdentifierProperty().columnSpan > 1 ? ' implements Serializable ' : ' '
 	}
@@ -547,7 +542,7 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 
 	private String combine(String start, String delim, String end, things, boolean lineUp = false) {
 		def buffer = new StringBuilder('\t')
-		
+
 		String pad
 		if (lineUp) {
 			def bufferPad = new StringBuilder()
@@ -556,7 +551,7 @@ class GrailsEntityPOJOClass extends EntityPOJOClass {
 			start.length().times { bufferPad.append ' ' }
 			pad = bufferPad.toString()
 		}
-		
+
 		buffer.append start
 		String delimiter = ''
 		things.each {

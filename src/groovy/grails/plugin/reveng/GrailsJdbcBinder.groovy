@@ -1,4 +1,4 @@
-/* Copyright 2006-2010 the original author or authors.
+/* Copyright 2010-2011 SpringSource.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 package grails.plugin.reveng
-
-import java.sql.SQLException
 
 import org.hibernate.cfg.JDBCBinder
 import org.hibernate.cfg.JDBCMetaDataConfiguration
@@ -49,7 +47,10 @@ class GrailsJdbcBinder extends JDBCBinder {
 	}
 
 	@Override
-	DatabaseCollector readDatabaseSchema(String catalog, String schema) throws SQLException {
+	DatabaseCollector readDatabaseSchema(String catalog, String schema) {
+		catalog = catalog ?: settings.getDefaultCatalogName()
+		schema = schema ?: settings.getDefaultSchemaName()
+
 		MetaDataDialect mdd = JDBCReaderFactory.newMetaDataDialect(
 				settings.dialect, cfg.getProperties())
 		JDBCReader reader = new JDBCReader(mdd, settings.connectionProvider, settings.getSQLExceptionConverter(),

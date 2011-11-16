@@ -1,6 +1,6 @@
 /cobertura.ser
-stacktrace.log
+*.log
 /target
 /grails-db-reverse-engineer-*.zip
 /plugin.xml
-
+.settings/

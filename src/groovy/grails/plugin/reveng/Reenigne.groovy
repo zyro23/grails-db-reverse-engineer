@@ -1,4 +1,4 @@
-/* Copyright 2006-2010 the original author or authors.
+/* Copyright 2010-2011 SpringSource.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class Reenigne {
 	boolean jdk5 = true
 	boolean overwrite = true
 
-	ConfigObject grailsConfig
+	ConfigObject revengConfig
 
 	GrailsReverseEngineeringStrategy reverseEngineeringStrategy = GrailsReverseEngineeringStrategy.INSTANCE
 
@@ -59,7 +59,7 @@ class Reenigne {
 		try {
 			buildConfiguration()
 
-			pojoExporter = new GrailsPojoExporter(overwrite, grailsConfig)
+			pojoExporter = new GrailsPojoExporter(overwrite, revengConfig)
 			configureExporter pojoExporter
 			pojoExporter.getProperties().setProperty('ejb3', ejb3.toString())
 			pojoExporter.getProperties().setProperty('jdk5', jdk5.toString())

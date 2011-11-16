@@ -14,11 +14,11 @@ h4. Inclusion/exclusion properties
 
 These configuration options let you define which tables and columns to include in processing. By default all tables and columns are processed.
 
-If you specify tables to include (@grails.plugin.reveng.includeTables@, @grails.plugin.reveng.includeTableRegexes@, and/or @grails.plugin.reveng.includeTableAntPatterns@) then only those will be used. If you specify any of these options then all of the table exclusion options are ignored; this is useful when you have already run the reverse engineer script but want to re-run it for only a subset of tables.
+If you specify tables to include (@g.p.r.includeTables@, @g.p.r.includeTableRegexes@, and/or @g.p.r.includeTableAntPatterns@) then only those will be used. If you specify any of these options then all of the table exclusion options are ignored; this is useful when you have already run the reverse engineer script but want to re-run it for only a subset of tables.
 
-If you specify tables to exclude (@grails.plugin.reveng.excludeTables@, @grails.plugin.reveng.excludeTableRegexes@, and/or @grails.plugin.reveng.excludeTableAntPatterns@) then any matching tables will be ignored.
+If you specify tables to exclude (@g.p.r.excludeTables@, @g.p.r.excludeTableRegexes@, and/or @g.p.r.excludeTableAntPatterns@) then any matching tables will be ignored.
 
-You can also specify columns to exclude (@grails.plugin.reveng.excludeColumns@, @grails.plugin.reveng.excludeColumnRegexes@, and/or @grails.plugin.reveng.excludeColumnAntPatterns@) and any matching columns will be ignored. These options can be used with table include rules or table exclude rules - any tables that are included or not excluded will have their columns included or excludede based on these rules.
+You can also specify columns to exclude (@g.p.r.excludeColumns@, @g.p.r.excludeColumnRegexes@, and/or @g.p.r.excludeColumnAntPatterns@) and any matching columns will be ignored. These options can be used with table include rules or table exclude rules - any tables that are included or not excluded will have their columns included or excludede based on these rules.
 
 One addition property, @grails.plugin.reveng.manyToManyTables@, doesn't affect whether a table is processed, but rather determines whether a table that won't look like a many-to-many table to the Hibernate Tools library (because it has more than two columns) is considered a many-to-many table.
 
@@ -38,9 +38,9 @@ grails.plugin.reveng.manyToManyTables | none | a List of table names that should
 
 h4. Other properties
 
-These remaining configuration options allow you to specify the folder where the domain classes are generated (@grails.plugin.reveng.destDir@), whether to overwrite existing classes (@grails.plugin.reveng.overwriteExisting@) and non-standard 'version' column names (@grails.plugin.reveng.versionColumns@).
+These remaining configuration options allow you to specify the folder where the domain classes are generated (@g.p.r.destDir@), whether to overwrite existing classes (@g.p.r.overwriteExisting@) and non-standard 'version' column names (@g.p.r.versionColumns@).
 
-There are also properties to set the default schema name (@grails.plugin.reveng.defaultSchema@) and catalog (@grails.plugin.reveng.defaultCatalog@) name which are useful when working with Oracle.
+There are also properties to set the default schema name (@g.p.r.defaultSchema@) and catalog (@g.p.r.defaultCatalog@) name which are useful when working with Oracle.
 
 {table}
 *Property* | *Default* | *Meaning*
@@ -49,5 +49,18 @@ grails.plugin.reveng.versionColumns | none | a Map of table name -> version colu
 grails.plugin.reveng.overwriteExisting | @true@ | whether to overwrite existing domain classes
 grails.plugin.reveng.defaultSchema | none | the default database schema name
 grails.plugin.reveng.defaultCatalog | none | the default database catalog name
+{table}
+
+h4. Properties for version 0.4
+
+Since the reverse engineering script is run in a separate forked JVM, it's not possible to know which JDBC driver you're using. So you need to specify it using the @g.p.r.jdbcDriverJarDep@ or @g.p.r.jdbcDriverJarPath@ option. @g.p.r.jdbcDriverJarDep@ is an Ivy dependency syntax string specifying which JDBC jar to use. The syntax is the same as what you use in @BuildConfig.groovy@, e.g. 'mysql:mysql-connector-java:5.1.13'. If the jar isn't available at Maven Central and you have the jar file, you can instead specify the full path to the jar with @g.p.r.jdbcDriverJarPath@. One of these two properties must be specified.
+
+The script uses Ivy to resolve several jars. This should work well but you can adjust the logging level of the Ivy resolver, just like you can in BuildConfig.groovy. To do this, specify the @g.p.r.ivyLogLevel@ property to one of 'error', 'warn', 'info', 'debug' or 'verbose'.
+
+{table}
+*Property* | *Default* | *Meaning*
+grails.plugin.reveng.jdbcDriverJarDep | none | Ivy dependency syntax string for the JDBC driver
+grails.plugin.reveng.jdbcDriverJarPath | none | Path to an existing JDBC jar
+grails.plugin.reveng.ivyLogLevel | 'warn' | The log level of the Ivy resolver
 {table}
 

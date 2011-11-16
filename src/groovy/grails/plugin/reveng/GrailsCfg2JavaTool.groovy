@@ -1,4 +1,4 @@
-/* Copyright 2006-2010 the original author or authors.
+/* Copyright 2010-2011 SpringSource.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,16 +29,16 @@ class GrailsCfg2JavaTool extends Cfg2JavaTool {
 
 	private Cfg2HbmTool c2h
 	private Configuration configuration
-	private ConfigObject grailsConfig
+	private ConfigObject revengConfig
 
-	GrailsCfg2JavaTool(Cfg2HbmTool c2h, Configuration configuration, ConfigObject grailsConfig) {
+	GrailsCfg2JavaTool(Cfg2HbmTool c2h, Configuration configuration, ConfigObject revengConfig) {
 		this.c2h = c2h
 		this.configuration = configuration
-		this.grailsConfig = grailsConfig
+		this.revengConfig = revengConfig
 	}
 
 	@Override
 	POJOClass getPOJOClass(PersistentClass comp) {
-		new GrailsEntityPOJOClass(comp, this, c2h, configuration, grailsConfig)
+		new GrailsEntityPOJOClass(comp, this, c2h, configuration, revengConfig)
 	}
 }
