@@ -2,3 +2,13 @@ The DB Reverse Engineering plugin reads database table information using JDBC an
 
 The plugin uses the [Hibernate Tools|http://www.hibernate.org/subprojects/tools.html] library, with custom code to generate GORM domain classes instead of Java POJOs.
 
+{warning}
+There is no released version of Hibernate Tools that works with the version of Hibernate Core that Grails 2.0 uses, so the plugin has been reworked for version 0.4 to spawn a new process which compiles the plugin classes and runs the reverse-engineering script using older compatible jars. In practice everything should work as it did in earlier versions.
+
+Since the plugin generates code from the commandline and isn't a runtime plugin, if this fails in a Grails 2.0 application you should consider creating a Grails 1.3.x application configured similarly and using version 0.3 there. Then copy the generated code into your 2.0 application.
+
+Once an updated version of Hibernate Tools is available an updated version of the plugin will be released that works with Grails 1.3 and 2.0 applications.
+
+*Important* - see section 2 for the configuration options that are required for version 0.4.
+{warning}
+

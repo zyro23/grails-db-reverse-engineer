@@ -19,7 +19,16 @@ package grails.plugin.reveng
  */
 class RevengRunner {
 
-	void run(config, String appName) {
+	static void main(String[] args) {
+		String configPath = args[0]
+		String appName = args[1]
+
+		File file = new File(configPath)
+		Map config = file.withObjectInputStream { it.readObject() }
+		new RevengRunner().run(config, appName)
+	}
+
+	void run(Map config, String appName) {
 
 		Reenigne reenigne = new Reenigne()
 		reenigne.revengConfig = config
